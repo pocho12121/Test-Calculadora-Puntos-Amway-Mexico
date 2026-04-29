@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculadora Pro - México Abr 2026</title>
+    <style>
+        :root { 
+            --primary: #0056b3; 
+            --accent: #0056b3;
+            --success: #28a745; 
+            --danger: #dc3545; 
+            --bg: #f0f2f5;
+            --container-bg: #ffffff;
+            --text-main: #1a1a1a;
+            --text-secondary: #495057;
+            --border: #ced4da;
+            --card-bg: #f8f9fa;
+            --input-bg: #ffffff;
+            --totals-bg: #e7f1ff;
+        }
+
+        body.dark-mode {
+            --bg: #121212;
+            --container-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --border: #444444;
+            --card-bg: #2d2d2d;
+            --input-bg: #333333;
+            --totals-bg: #1a222d;
+            --accent: #00d4ff; 
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); padding: 10px; color: var(--text-main); transition: 0.3s; overflow-x: hidden; }
+        
+        .container { max-width: 1100px; margin: 0 auto; background: var(--container-bg); border-radius: 16px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        
+        .header { border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .header h1 { font-size: clamp(0.85rem, 3.5vw, 1.2rem); line-height: 1.2; }
+
+        .search-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 10px; 
+            background: var(--card-bg); 
+            padding: 12px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border);
+        }
+
+        @media (min-width: 768px) {
+            .search-grid { grid-template-columns: 1.5fr 1.5fr 1fr 1fr 100px 120px; align-items: end; }
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .form-group label { font-weight: 700; font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; }
+        .form-group input, .form-group select { padding: 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main); height: 44px; width: 100%; }
+
+        .qty-controls { display: flex; align-items: center; gap: 4px; justify-content: center; background: var(--input-bg); border: 1px solid var(--border); border-radius: 8px; height: 44px; padding: 0 5px; }
+        .btn-qty { width: 30px; height: 30px; border: none; background: var(--primary); color: white; border-radius: 5px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+
+        .data-display { background: var(--input-bg); padding: 0 8px; border: 1px solid var(--border); border-radius: 8px; height: 44px; display: flex; align-items: center; font-weight: 700; color: var(--accent); font-size: 0.9rem; }
+
+        /* LÓGICA DE VISIBILIDAD CRÍTICA */
+        .table-container { margin-top: 15px; display: none; overflow-x: auto; width: 100%; }
+        .mobile-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+        @media (min-width: 768px) { 
+            .table-container { display: block; } 
+            .mobile-cards { display: none !important; } 
+            table { width: 100%; border-collapse: collapse; min-width: 600px; }
+            th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+            thead { background: var(--primary); color: white; }
+        }
+
+        .compare-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 15px; font-size: 0.9rem; }
+        .card-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; }
+
+        .totals-bar { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; padding: 15px; background: var(--totals-bg); border-radius: 12px; border: 1px solid var(--accent); }
+        @media (min-width: 600px) { .totals-bar { grid-template-columns: repeat(3, 1fr); } }
+        .total-item strong { font-size: 1.2rem; color: var(--accent); display: block; }
+
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 0.9rem; transition: 0.2s; }
+        .btn-add { background: var(--success); color: white; width: 100%; }
+        .btn-danger { background: var(--danger); color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; }
+        .btn-circle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--card-bg); border: 1px solid var(--border); color: var(--text-main); }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
+        .modal-content { background: var(--container-bg); padding: 20px; border-radius: 16px; width: 100%; max-width: 400px; }
+
+        .admin-item { background: var(--card-bg); padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid var(--border); }
+        .hotfix-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+        .hotfix-grid div { display: flex; flex-direction: column; gap: 2px; }
+        .hotfix-grid input { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Calculadora México, Abr, 2026.</h1>
+        <div style="display:flex; gap:6px;">
+            <button class="btn-circle" onclick="toggleDarkMode()" id="themeToggle">🌙</button>
+            <button class="btn-circle" onclick="openModal('loginModal')">⚙️</button>
+        </div>
+    </div>
+
+    <div class="search-grid">
+        <div class="form-group"><label>🔍 Buscar</label><input type="text" id="quickSearch" placeholder="Nombre/Código" oninput="filterProducts()"></div>
+        <div class="form-group"><label>📦 Producto</label><select id="prodSelect" onchange="showPrices()"></select></div>
+        <div class="form-group"><label>💰 Púb.</label><div class="data-display" id="dispPublic">$0.00</div></div>
+        <div class="form-group"><label>🏷️ Emp.</label><div class="data-display" id="dispEmp">$0.00</div></div>
+        <div class="form-group">
+            <label>🔢 Cant.</label>
+            <div class="qty-controls">
+                <button class="btn-qty" onclick="changeMainQty(-1)">-</button>
+                <span id="qtyVal" style="font-weight:bold; min-width:20px; text-align:center;">1</span>
+                <button class="btn-qty" onclick="changeMainQty(1)">+</button>
+            </div>
+        </div>
+        <button class="btn btn-add" onclick="addItem()">Añadir</button>
+    </div>
+
+    <div id="mobileCards" class="mobile-cards"></div>
+
+    <div class="table-container">
+        <table>
+            <thead><tr><th>Descripción</th><th>Cant.</th><th>Público</th><th>Empresario</th><th>Puntos</th><th>Acción</th></tr></thead>
+            <tbody id="compareTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="totals-bar">
+        <div class="total-item"><span>PÚBLICO</span><strong id="tPub">$0.00</strong></div>
+        <div class="total-item"><span>EMPRESARIO</span><strong id="tEmp">$0.00</strong></div>
+        <div class="total-item"><span>PUNTOS</span><strong id="tPts">⭐ 0.00</strong></div>
+    </div>
+    <button class="btn" style="background:#6c757d; color:white; margin-top:10px; width:100%;" onclick="clearAll()">Nueva Consulta</button>
+
+    <div id="adminArea" style="display:none; margin-top:30px; border-top:1px dashed var(--border); padding-top:20px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+            <h3>Panel Admin Hot Fixes</h3>
+            <button class="btn-danger" onclick="logout()">Cerrar</button>
+        </div>
+        <input type="text" id="sheetUrl" placeholder="URL Google Sheets..." style="width:100%; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);">
+        <button class="btn btn-add" onclick="syncWithSheets()" style="margin-bottom:20px;">🔄 Sincronizar Base</button>
+        <div id="adminList"></div>
+    </div>
+</div>
+
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h3>Acceso Admin</h3><br>
+        <input type="password" id="pass" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid var(--border);">
+        <button class="btn btn-add" onclick="login()">Entrar</button>
+        <button class="btn" style="background:none; color:var(--text-secondary); margin-top:10px; width:100%;" onclick="closeModal('loginModal')">Cerrar</button>
+    </div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('plutus_db')) || [];
+    let compareList = [];
+    let mainQty = 1;
+
+// 1. Modificamos init para que sea "async" (asíncrona)
+async function init() {
+    renderSelect(db);
+
+    // Intentar cargar automáticamente si no hay datos guardados
+    if (db.length === 0) {
+        const urlMaestra = "https://script.google.com/macros/s/AKfycbwzQaERJWMP76mLKIIxcptOPcbVlXqByvFrm3cDSjn8oxxc2X2BxCNA4sKDc8v7x7W0/exec"; // <--- PEGA AQUÍ TU LINK
+        await autoSync(urlMaestra);
+    }
+
+    if(localStorage.getItem('plutus_sheet_url')) document.getElementById('sheetUrl').value = localStorage.getItem('plutus_sheet_url');
+    if(localStorage.getItem('darkMode') === 'enabled') toggleDarkMode();
+}
+
+// 2. Añadimos esta nueva función justo debajo de init()
+async function autoSync(url) {
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        db = data.map((item, i) => ({
+            id: "ID-" + Date.now() + i,
+            code: item.codigo || item.code || "N/A",
+            name: item.nombre || item.name || "Sin Nombre",
+            publicPrice: parseFloat(item.publicPrice) || 0,
+            employeePrice: parseFloat(item.employeePrice) || 0,
+            points: parseFloat(item.puntos) || parseFloat(item.points) || 0
+        }));
+        // Guardamos en el navegador para que funcione offline después
+        localStorage.setItem('plutus_db', JSON.stringify(db));
+        renderSelect(db);
+        renderAdminList();
+        console.log("Base de datos cargada automáticamente.");
+    } catch (e) {
+        console.error("No se pudo cargar la base de datos automática:", e);
+    }
+}
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+        document.getElementById('themeToggle').innerText = isDark ? '☀️' : '🌙';
+    }
+
+    async function syncWithSheets() {
+        const url = document.getElementById('sheetUrl').value;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            db = data.map((item, i) => ({
+                id: "ID-" + Date.now() + i,
+                code: item.codigo || item.code || "N/A",
+                name: item.nombre || item.name || "Sin Nombre",
+                publicPrice: parseFloat(item.publicPrice) || 0,
+                employeePrice: parseFloat(item.employeePrice) || 0,
+                points: parseFloat(item.puntos) || parseFloat(item.points) || 0
+            }));
+            saveDB();
+            alert("Sincronizado.");
+        } catch (e) { alert("Error de URL"); }
+    }
+
+    function hotFix(id) {
+        const p = db.find(x => x.id === id);
+        p.publicPrice = parseFloat(document.getElementById(`pub-${id}`).value);
+        p.employeePrice = parseFloat(document.getElementById(`emp-${id}`).value);
+        p.points = parseFloat(document.getElementById(`pts-${id}`).value);
+        saveDB();
+        alert("Hot Fix guardado.");
+    }
+
+    function saveDB() {
+        localStorage.setItem('plutus_db', JSON.stringify(db));
+        renderSelect(db);
+        renderAdminList();
+    }
+
+    function filterProducts() {
+        const val = document.getElementById('quickSearch').value.toLowerCase();
+        const filtered = db.filter(p => p.name.toLowerCase().includes(val) || p.code.toString().toLowerCase().includes(val));
+        renderSelect(filtered);
+        if (filtered.length === 1) { document.getElementById('prodSelect').value = filtered[0].id; showPrices(); }
+    }
+
+    function renderSelect(data) {
+        document.getElementById('prodSelect').innerHTML = '<option value="">-- Producto --</option>' + 
+            data.map(p => `<option value="${p.id}">${p.code} - ${p.name}</option>`).join('');
+    }
+
+    function showPrices() {
+        const p = db.find(x => x.id == document.getElementById('prodSelect').value);
+        document.getElementById('dispPublic').innerText = p ? `$${p.publicPrice.toFixed(2)}` : '$0.00';
+        document.getElementById('dispEmp').innerText = p ? `$${p.employeePrice.toFixed(2)}` : '$0.00';
+    }
+
+    function addItem() {
+        const p = db.find(x => x.id == document.getElementById('prodSelect').value);
+        if(!p) return;
+        compareList.push({...p, qty: mainQty});
+        renderCompare();
+    }
+
+    function renderCompare() {
+        const tableBody = document.getElementById('compareTableBody');
+        const cardsContainer = document.getElementById('mobileCards');
+        let tp = 0, te = 0, pts = 0, tHtml = '', cHtml = '';
+
+        if (compareList.length === 0) {
+            tableBody.innerHTML = '';
+            cardsContainer.innerHTML = '';
+        } else {
+            compareList.forEach((item, i) => {
+                const sp = item.publicPrice * item.qty, se = item.employeePrice * item.qty, spt = item.points * item.qty;
+                tp += sp; te += se; pts += spt;
+                
+                // HTML para Escritorio (Tabla)
+                tHtml += `<tr>
+                    <td><strong>${item.name}</strong></td>
+                    <td>
+                        <div class="qty-controls" style="border:none; height:auto;">
+                            <button class="btn-qty" onclick="changeListQty(${i},-1)">-</button>
+                            <span style="margin:0 8px">${item.qty}</span>
+                            <button class="btn-qty" onclick="changeListQty(${i},1)">+</button>
+                        </div>
+                    </td>
+                    <td>$${sp.toFixed(2)}</td><td>$${se.toFixed(2)}</td><td>⭐ ${spt.toFixed(2)}</td>
+                    <td><button class="btn-danger" onclick="removeItem(${i})">×</button></td>
+                </tr>`;
+
+                // HTML para Móvil (Tarjetas)
+                cHtml += `<div class="compare-card">
+                    <strong>${item.name}</strong><br>
+                    <small style="color:var(--text-secondary)">Púb: $${sp.toFixed(2)} | Emp: $${se.toFixed(2)}</small>
+                    <div class="card-row">
+                        <div class="qty-controls" style="flex:1;">
+                            <button class="btn-qty" onclick="changeListQty(${i},-1)">-</button>
+                            <span style="font-weight:bold; margin:0 15px;">${item.qty}</span>
+                            <button class="btn-qty" onclick="changeListQty(${i},1)">+</button>
+                        </div>
+                        <button class="btn-danger" onclick="removeItem(${i})">Eliminar</button>
+                    </div>
+                </div>`;
+            });
+        }
+        
+        tableBody.innerHTML = tHtml; 
+        cardsContainer.innerHTML = cHtml;
+        document.getElementById('tPub').innerText = `$${tp.toFixed(2)}`;
+        document.getElementById('tEmp').innerText = `$${te.toFixed(2)}`;
+        document.getElementById('tPts').innerText = `⭐ ${pts.toFixed(2)}`;
+    }
+
+    function renderAdminList() {
+        document.getElementById('adminList').innerHTML = db.map(p => `
+            <div class="admin-item">
+                <div style="font-size:0.85rem; font-weight:bold;">${p.code} - ${p.name}</div>
+                <div class="hotfix-grid">
+                    <div><label style="font-size:0.6rem">Púb</label><input type="number" id="pub-${p.id}" value="${p.publicPrice}"></div>
+                    <div><label style="font-size:0.6rem">Emp</label><input type="number" id="emp-${p.id}" value="${p.employeePrice}"></div>
+                    <div><label style="font-size:0.6rem">Pts</label><input type="number" id="pts-${p.id}" value="${p.points}"></div>
+                </div>
+                <button class="btn btn-add" style="height:35px; margin-top:8px; font-size:0.8rem;" onclick="hotFix('${p.id}')">Guardar Hot Fix</button>
+            </div>`).join('');
+    }
+
+    function changeMainQty(v) { mainQty = Math.max(1, mainQty + v); document.getElementById('qtyVal').innerText = mainQty; }
+    function changeListQty(i, d) { compareList[i].qty = Math.max(1, compareList[i].qty + d); renderCompare(); }
+    function removeItem(i) { compareList.splice(i,1); renderCompare(); }
+    function clearAll() { compareList = []; renderCompare(); }
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function logout() { document.getElementById('adminArea').style.display = 'none'; }
+    function login() { if(document.getElementById('pass').value === 'Admin123') { document.getElementById('adminArea').style.display = 'block'; closeModal('loginModal'); renderAdminList(); } }
+
+    init();
+</script>
+</body>
+</html>
