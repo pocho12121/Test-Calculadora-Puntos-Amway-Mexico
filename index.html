@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calculadora Pro - México Abr 2026</title>
     <style>
-        :root { 
-            --primary: #0056b3; 
+        :root {
+            --primary: #0056b3;
             --accent: #0056b3;
-            --success: #28a745; 
-            --danger: #dc3545; 
+            --success: #28a745;
+            --danger: #dc3545;
             --bg: #f0f2f5;
             --container-bg: #ffffff;
             --text-main: #1a1a1a;
@@ -29,24 +29,24 @@
             --card-bg: #2d2d2d;
             --input-bg: #333333;
             --totals-bg: #1a222d;
-            --accent: #00d4ff; 
+            --accent: #00d4ff;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); padding: 10px; color: var(--text-main); transition: 0.3s; overflow-x: hidden; }
-        
+
         .container { max-width: 1100px; margin: 0 auto; background: var(--container-bg); border-radius: 16px; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        
+
         .header { border-bottom: 3px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .header h1 { font-size: clamp(0.85rem, 3.5vw, 1.2rem); line-height: 1.2; }
 
-        .search-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 10px; 
-            background: var(--card-bg); 
-            padding: 12px; 
-            border-radius: 12px; 
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 12px;
             border: 1px solid var(--border);
         }
 
@@ -67,9 +67,9 @@
         .table-container { margin-top: 15px; display: none; overflow-x: auto; width: 100%; }
         .mobile-cards { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 
-        @media (min-width: 768px) { 
-            .table-container { display: block; } 
-            .mobile-cards { display: none !important; } 
+        @media (min-width: 768px) {
+            .table-container { display: block; }
+            .mobile-cards { display: none !important; }
             table { width: 100%; border-collapse: collapse; min-width: 600px; }
             th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
             thead { background: var(--primary); color: white; }
@@ -138,19 +138,15 @@
         <div class="total-item"><span>EMPRESARIO</span><strong id="tEmp">$0.00</strong></div>
         <div class="total-item"><span>PUNTOS</span><strong id="tPts">⭐ 0.00</strong></div>
     </div>
-    <button class="btn" style="background:#6c757d; color:white; margin-top:10px; width:100%;" onclick="clearAll()">Nueva Consulta</button>
-
-    <div id="adminArea" style="display:none; margin-top:30px; border-top:1px dashed var(--border); padding-top:20px;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-            <h3>Panel Admin Hot Fixes</h3>
-            <button class="btn-danger" onclick="logout()">Cerrar</button>
-        </div>
-        <input type="text" id="sheetUrl" placeholder="URL Google Sheets..." style="width:100%; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-main);">
-        <button class="btn btn-add" onclick="syncWithSheets()" style="margin-bottom:20px;">🔄 Sincronizar Base</button>
-        <div id="adminList"></div>
-    </div>
+<button class="btn" style="background:#6c757d; color:white; margin-top:10px; width:100%;" onclick="clearAll()">Nueva Consulta</button>
+<div style="display: flex; gap: 10px; margin-bottom: 15px; margin-top: 10px;">
+    <button class="btn" style="flex: 1; padding: 10px; font-size: 0.85rem; border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg); color: var(--main-text); shadow: var(--shadow);" onclick="prepararTicket('socio')">
+        <i class="bi bi-person-badge"></i> Ticket Socio
+    </button>
+    <button class="btn btn-success" style="flex: 1; padding: 10px; font-size: 0.85rem; border-radius: 8px; background-color: #198754; border: none; color: white;" onclick="prepararTicket('cliente')">
+        <i class="bi bi-whatsapp"></i> Ticket Cliente
+    </button>
 </div>
-
 <div id="loginModal" class="modal">
     <div class="modal-content">
         <h3>Acceso Admin</h3><br>
@@ -159,14 +155,127 @@
         <button class="btn" style="background:none; color:var(--text-secondary); margin-top:10px; width:100%;" onclick="closeModal('loginModal')">Cerrar</button>
     </div>
 </div>
+<div id="ticket-wrapper" style="position: absolute; left: -9999px; top: 0;">
+    <div id="ticket-visual" style="width: 350px; background: white; color: #333; padding: 25px; border: 1px solid #eee; font-family: 'Helvetica', sans-serif;">
+        <div style="text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 15px;">
+            <h2 style="margin: 0; color: #007bff; font-size: 22px;">RESUMEN DE VENTA</h2>
+            <p id="ticket-fecha" style="font-size: 12px; margin: 5px 0; color: #777;"></p>
+        </div>
+        <div id="ticket-items"></div>
+        <div style="border-top: 1px dashed #ccc; margin-top: 15px; padding-top: 15px;" id="ticket-totales-area"></div>
+        <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #888;">
+            <p>Generado con Calculadora Amway México<br>¡Gracias por tu preferencia!</p>
+        </div>
+    </div>
+</div>
 
 <script>
     let db = JSON.parse(localStorage.getItem('plutus_db')) || [];
     let compareList = [];
     let mainQty = 1;
+// --- FUNCIONES DE GENERACIÓN DE TICKET ---
+
+function prepararTicket(tipo) {
+    const contenedorItems = document.getElementById('ticket-items');
+    const contenedorTotales = document.getElementById('ticket-totales-area');
+    const fechaElemento = document.getElementById('ticket-fecha');
+
+    if(fechaElemento) fechaElemento.innerText = new Date().toLocaleString();
+    contenedorItems.innerHTML = '';
+
+    let totalPuntos = 0;
+    let totalSocio = 0;
+    let totalPublico = 0;
+
+    if (!compareList || compareList.length === 0) {
+        alert("Primero añade productos a la lista");
+        return;
+    }
+
+    compareList.forEach(item => {
+        const cant = parseInt(item.qty || 1);
+
+        // AQUÍ ESTABA EL ERROR: Ahora usamos los nombres exactos de tu variable "db"
+        const pSocio = parseFloat(item.employeePrice) || 0;
+        const pPublico = parseFloat(item.publicPrice) || 0;
+        const pts = parseFloat(item.points) || 0; // <--- Se llama 'points', no 'puntos'
+
+        totalSocio += (pSocio * cant);
+        totalPublico += (pPublico * cant);
+        totalPuntos += (pts * cant);
+
+        const row = document.createElement('div');
+        row.style.marginBottom = '12px';
+
+        if (tipo === 'socio') {
+            row.innerHTML = `
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;">
+                    <span>${cant}x ${item.name}</span>
+                    <span>$${(pSocio * cant).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; color:#666;">
+                    <span>Púb: $${pPublico.toLocaleString('es-MX')} | ⭐ ${pts.toFixed(2)} pts</span>
+                    <span style="color:#28a745;">Socio: $${pSocio.toLocaleString('es-MX')}</span>
+                </div>`;
+        } else {
+            row.innerHTML = `
+                <div style="display:flex; justify-content:space-between; font-size:14px;">
+                    <span>${cant}x ${item.name}</span>
+                    <span style="font-weight:bold;">$${(pPublico * cant).toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                </div>`;
+        }
+        contenedorItems.appendChild(row);
+    });
+
+    // Renderizado de Totales
+    if (tipo === 'socio') {
+        const ahorro = totalPublico - totalSocio;
+        contenedorTotales.innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:5px;">
+                <span>Total Público:</span> <span>$${totalPublico.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:15px; margin-bottom:5px; font-weight:bold; color:#007bff;">
+                <span>Total Puntos:</span> <span>⭐ ${totalPuntos.toFixed(2)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-weight:bold; color:#28a745; font-size:18px; border-top:1px solid #eee; padding-top:10px;">
+                <span>PAGAS COMO SOCIO:</span> <span>$${totalSocio.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+            </div>
+            <div style="background:#e9f7ef; color:#155724; padding:8px; border-radius:5px; text-align:center; margin-top:10px; font-weight:bold;">
+                🎉 ¡Ahorro total: $${ahorro.toLocaleString('es-MX', {minimumFractionDigits: 2})}!
+            </div>`;
+    } else {
+        contenedorTotales.innerHTML = `
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:20px; border-top:1px solid #eee; padding-top:10px;">
+                <span>TOTAL:</span> <span>$${totalPublico.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+            </div>`;
+    }
+
+    setTimeout(() => { descargarTicketImagen(tipo); }, 500);
+}
+function descargarTicketImagen(tipo) {
+    const ticket = document.getElementById('ticket-visual');
+    if (!ticket) {
+        console.error("No se encontró el contenedor del ticket");
+        return;
+    }
+
+    html2canvas(ticket, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        logging: false,
+        useCORS: true
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Ticket_${tipo}_Amway.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }).catch(err => {
+        console.error("Error al generar imagen:", err);
+    });
+}
     async function forceUpdate() {
     const urlMaestra = "https://script.google.com/macros/s/AKfycbwzQaERJWMP76mLKIIxcptOPcbVlXqByvFrm3cDSjn8oxxc2X2BxCNA4sKDc8v7x7W0/exec";
-    
+
     // Cambiamos el icono temporalmente para dar feedback visual
     const btn = event.currentTarget;
     const originalIcon = btn.innerText;
@@ -269,7 +378,7 @@ async function autoSync(url) {
     }
 
     function renderSelect(data) {
-        document.getElementById('prodSelect').innerHTML = '<option value="">-- Producto --</option>' + 
+        document.getElementById('prodSelect').innerHTML = '<option value="">-- Producto --</option>' +
             data.map(p => `<option value="${p.id}">${p.code} - ${p.name}</option>`).join('');
     }
 
@@ -298,7 +407,7 @@ async function autoSync(url) {
             compareList.forEach((item, i) => {
                 const sp = item.publicPrice * item.qty, se = item.employeePrice * item.qty, spt = item.points * item.qty;
                 tp += sp; te += se; pts += spt;
-                
+
                 // HTML para Escritorio (Tabla)
                 tHtml += `<tr>
                     <td><strong>${item.name}</strong></td>
@@ -328,8 +437,8 @@ async function autoSync(url) {
                 </div>`;
             });
         }
-        
-        tableBody.innerHTML = tHtml; 
+
+        tableBody.innerHTML = tHtml;
         cardsContainer.innerHTML = cHtml;
         document.getElementById('tPub').innerText = `$${tp.toFixed(2)}`;
         document.getElementById('tEmp').innerText = `$${te.toFixed(2)}`;
@@ -360,5 +469,6 @@ async function autoSync(url) {
 
     init();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>
